@@ -1,0 +1,184 @@
+\documentclass[11pt]{article}
+
+\usepackage[paperwidth=28cm, paperheight=21cm, margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage[spanish, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{english}
+\babelfont{rm}{Noto Sans}
+\usepackage{enumitem}
+\setlist[itemize]{label=-}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\definecolor{accentblue}{RGB}{24, 78, 119}
+\definecolor{mutedgray}{RGB}{90, 100, 110}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=accentblue,
+    urlcolor=accentblue,
+    pdftitle={Guia de diseno de prompts para modelizacion y visualizacion en Electromagnetismo},
+}
+
+\title{\textbf{\color{accentblue}Guía de diseño de prompts para modelización y visualización en Electromagnetismo}}
+\author{Material docente --- Uso crítico de modelos de lenguaje en física computacional}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Esta guía muestra cómo formular instrucciones precisas (prompts) para obtener código científico riguroso y visualizaciones físicamente exactas con ayuda de modelos de lenguaje. A partir del ejemplo clásico de Feynman sobre la corriente de desplazamiento en un condensador circular, se presentan dos casos de estudio completos: el cálculo numérico exacto del perfil radial del campo magnético con efectos de borde (\texttt{perfil\_radial\_baja\_frecuencia\_v2.py}) y la generación de una animación 3D sincronizada con el balance exacto de corrientes (\texttt{feyn\_balance\_2.py}). En cada caso se ofrece tanto un prompt maestro de un solo paso como una secuencia iterativa recomendada para el aprendizaje y la verificación física.
+\end{abstract}
+
+\tableofcontents
+\vspace{0.4cm}
+
+\section{Principios generales para prompts científicos eficaces}
+
+Cuando se pide a un modelo de lenguaje que resuelva un problema de física computacional con una instrucción vaga (por ejemplo, «hazme una gráfica del campo magnético en un condensador»), el resultado suele apoyarse en aproximaciones burdas, cuadraturas lentas o animaciones decorativas desconectadas de las ecuaciones reales. Para evitarlo, conviene estructurar siempre la petición alrededor de cinco principios:
+
+\begin{enumerate}
+    \item \textbf{Fijar la física y las condiciones de contorno antes que el código:} indicar qué teoremas de base (como Helmholtz) o qué condiciones físicas reales (por ejemplo, que una placa metálica es equipotencial y no tiene $\sigma$ uniforme) rigen el problema evita que el modelo elija métodos ineficientes o invente correcciones \textit{ad hoc}, sin necesidad de memorizar apellidos ni artículos especializados.
+    \item \textbf{Exigir reducción analítica parcial:} pedir que las integrales resolubles en forma cerrada o los cambios de variable que eliminan singularidades se hagan antes de pasar al cálculo numérico garantiza rapidez y estabilidad.
+    \item \textbf{Trabajar en variables adimensionales y con referencias conocidas:} normalizar longitudes y campos elimina constantes innecesarias y permite detectar de inmediato errores de signo o de factor $2$ o $\pi$.
+    \item \textbf{Especificar la pila tecnológica y el formato de salida:} declarar las librerías concretas y el formato de exportación evita dependencias pesadas o incompatibles con el entorno de trabajo.
+    \item \textbf{Incorporar verificaciones cruzadas:} en el trabajo iterativo, pedir comprobaciones frente a límites analíticos conocidos ($d \to 0$, ley del hilo infinito, aproximación de Kirchhoff) es la mejor defensa frente a errores silenciosos.
+\end{enumerate}
+
+\section{Caso de estudio 1: Perfil radial exacto con efectos de borde}
+
+Objetivo: reproducir el script \texttt{perfil\_radial\_baja\_frecuencia\_v2.py}, que calcula el campo magnético cuasiestático $H_\phi(\rho, z)$ de un condensador circular de radio $R$ y separación $d = 0{,}2\,R$, comparando el modelo de carga uniforme con la solución exacta de placas conductoras equipotenciales de Love (1949).
+
+\subsection{Opción A: Prompt maestro (en un solo paso)}
+
+\noindent\color{mutedgray}\rule{\linewidth}{0.5pt}\color{black}
+\begin{quote}
+Escribe un script autocontenido en Python (\texttt{numpy}, \texttt{scipy}, \texttt{matplotlib}) que calcule y represente el perfil radial exacto del campo magnético cuasiestático $H_\phi(\rho, z)$ de un condensador de placas circulares paralelas de radio $R=1$ y separación $d = 0{,}2\,R$, alimentado por dos hilos semiinfinitos axiales con corriente $I$.
+
+\textbf{Requisitos físicos y numéricos:}
+\begin{enumerate}
+    \item Usa el teorema de Helmholtz ($\nabla \times \mathbf{J}_d = \mathbf{0}$ en régimen cuasiestático) para calcular $H_\phi$ integrando únicamente las corrientes de conducción por Biot-Savart: los dos hilos semiinfinitos ($|z'| \ge d/2$) y las corrientes superficiales radiales en ambas placas ($z' = \pm d/2$).
+    \item Evalúa la integral acimutal de Biot-Savart en forma cerrada usando las integrales elípticas completas \texttt{ellipk} y \texttt{ellipe}, y realiza solo la integral radial con \texttt{scipy.integrate.quad} (indicando \texttt{points=[rho]} cuando $\rho < R$).
+    \item Implementa dos modelos para la fracción de corriente radial $F(\rho) = I_{\mathrm{rad}}(\rho)/I$:
+    \begin{itemize}
+        \item Densidad de carga uniforme: $F(\rho) = 1 - (\rho/R)^2$.
+        \item Placas conductoras reales equipotenciales ($V = \pm V_0/2$): resuelve el problema electrostático de bordes mediante su formulación integral 1D clásica en el intervalo $[-1, 1]$ con cuadratura de Gauss-Legendre, imprime $C/C_{\mathrm{ideal}}$ validándolo frente a la aproximación de bordes de Kirchhoff y evalúa $F(\rho)$ evitando derivar $\sigma(\rho)$ y eliminando la singularidad integrable en $\rho = R$ mediante un cambio de variable adecuado.
+    \end{itemize}
+    \item Normaliza el campo a $H_0 = I/(2\pi R)$ y dibuja en una gráfica limpia estilo presentación ($\rho/R \in [0, 3]$, $H_\phi/H_0 \in [0, 2{,}2]$, malla refinada cerca de $\rho = R$): el hilo infinito $I/(2\pi\rho)$, el condensador ideal ($d \ll R$), $z = 5{,}5\,d$, $z = 0$ ($\sigma$ uniforme) y $z = 0$ (placas conductoras equipotenciales). Exporta automáticamente a \texttt{.pdf} y \texttt{.png} a 300 dpi usando el nombre del script.
+\end{enumerate}
+\end{quote}
+\noindent\color{mutedgray}\rule{\linewidth}{0.5pt}\color{black}
+
+\subsection{Opción B: Secuencia iterativa recomendada para 3.º de Física}
+
+\begin{enumerate}
+    \item \textbf{Paso 1 --- Física y reducción analítica:}
+    \begin{quote}
+    «En un condensador circular en régimen cuasiestático ($d = 0{,}2\,R$), justifica por el teorema de Helmholtz por qué el campo magnético puede calcularse aplicando Biot-Savart solo a los hilos y a las corrientes radiales de las placas. Deduce la expresión cerrada de los hilos y reduce la integral acimutal de un anillo de corriente radial a integrales elípticas $K(m)$ y $E(m)$. Verifica numéricamente en Python la fórmula elíptica frente a una cuadratura directa en $\phi$ y comprueba que en el límite $d \to 0$ recuperamos $H_\phi = I\rho/(2\pi R^2)$ dentro y $I/(2\pi\rho)$ fuera.»
+    \end{quote}
+
+    \item \textbf{Paso 2A --- Cuestionar la hipótesis física y descubrir el método (prompt puente):}
+    \begin{quote}
+    «En el script anterior asumimos densidad de carga uniforme $\sigma = Q/(\pi R^2)$, pero en un condensador real las placas son conductoras equipotenciales ($V = \pm V_0/2$) y la carga se acumula cerca del borde $\rho \to R$. Por continuidad en la placa, eso también cambia la corriente superficial radial $I_{\mathrm{rad}}(\rho)$. ¿Cuál es la formulación clásica más limpia y precisa (por ejemplo, una ecuación integral 1D o un método de momentos por anillos) para obtener la distribución exacta sin mallar todo el espacio 3D? Explica el método y dime contra qué fórmula analítica conocida podemos validar la capacidad resultante.»
+    \end{quote}
+    \textit{\small\color{mutedgray}(En su respuesta, el modelo recupera por sí solo la ecuación integral de Fredholm de Love (1949) y la fórmula asintótica de Kirchhoff para $C/C_{\mathrm{ideal}}$.)}
+
+    \item \textbf{Paso 2B --- Implementación sin singularidades y verificación:}
+    \begin{quote}
+    «Implementa ese método en Python con cuadratura de Gauss-Legendre. Comprueba primero que $C/C_{\mathrm{ideal}}$ concuerda con la aproximación de Kirchhoff. Después obtén la fracción de corriente radial $F(\rho) = I_{\mathrm{rad}}(\rho)/I$ evitando derivar $\sigma(\rho)$ y eliminando la singularidad integrable en $\rho = R$ mediante un cambio de variable adecuado, e intégralo en la gráfica para compararlo con el caso de $\sigma$ uniforme.»
+    \end{quote}
+
+    \item \textbf{Paso 3 --- Representación lista para publicación:}
+    \begin{quote}
+    «Integra todo en un único script limpio que compare $z = 0$ ($\sigma$ uniforme y placas conductoras equipotenciales), $z = 5{,}5\,d$, el límite ideal y el hilo infinito $I/(2\pi\rho)$, normalizado a $H_0 = I/(2\pi R)$, con sombreado en $\rho \le R$, leyenda clara y exportación automática a PDF y PNG a 300 dpi.»
+    \end{quote}
+\end{enumerate}
+
+\subsection{Palancas clave de diseño en este caso}
+
+\begin{itemize}
+    \item \textbf{Detectar la hipótesis física violada (sin memorizar apellidos):} basta señalar que unas placas metálicas son equipotenciales ($V = \pm V_0/2$) y no tienen carga uniforme para que el modelo recupere la literatura clásica (ecuación integral de Love de 1949 y fórmula de Kirchhoff), evitando que invente suavizados artificiales.
+    \item \textbf{Integrales elípticas y cambios no singulares:} pedir la reducción a \texttt{ellipk}/\texttt{ellipe} y la eliminación analítica de la singularidad en $\rho = R$ reduce el tiempo de cómputo a menos de un segundo con precisión de máquina.
+\end{itemize}
+
+\section{Caso de estudio 2: Animación 3D del balance de corrientes}
+
+Objetivo: reproducir el script \texttt{feyn\_balance\_2.py}, que genera un vídeo \texttt{.mp4} ilustrando la deformación continua de la superficie de Stokes a través de la placa superior junto con un gráfico de barras dinámico gobernado por la intersección geométrica exacta.
+
+\subsection{Opción A: Prompt maestro (en un solo paso)}
+
+\noindent\color{mutedgray}\rule{\linewidth}{0.5pt}\color{black}
+\begin{quote}
+{\sloppy Escribe un script autocontenido en Python usando solo \texttt{numpy} y \texttt{matplotlib} (\texttt{Poly3DCollection}, \texttt{FuncAnimation}, \texttt{FFMpegWriter}, sin Manim) que genere un vídeo \texttt{.mp4} de 26\,s a 25\,fps (guardado automáticamente con el nombre del script) ilustrando la ley de Ampère-Maxwell y la conservación de la corriente total al deformar la superficie de Stokes en un condensador circular (ejemplo de Feynman con $r > R$).\par}
+
+\textbf{Geometría y escena 3D (fondo oscuro \texttt{\#101820}):}
+\begin{enumerate}
+    \item Dos placas circulares de radio $R = 1{,}15$ en $z = \pm 0{,}55$, dos cables cilíndricos axiales con flechas naranjas de corriente $I$ hacia abajo ($-\hat{z}$) y flechas rojas de campo eléctrico $\mathbf{E}$ entre placas.
+    \item Un contorno circular amarillo $\Gamma$ de radio $r = 2{,}35 > R$ con 4 flechas tangentes de $\mathbf{B}$ (sentido horario visto desde arriba, por la regla de la mano derecha) y una superficie semitransparente \texttt{Poly3DCollection} parametrizada como $z(\rho) = z_{\mathrm{fondo}} + (z_{\mathrm{boca}} - z_{\mathrm{fondo}})(\rho/r)^{2{,}2}$.
+\end{enumerate}
+
+\textbf{Física exacta y panel lateral:}
+\begin{enumerate}
+    \setcounter{enumi}{2}
+    \item Implementa una función analítica \texttt{compute\_exact\_flux\_split(z\_bottom, z\_mouth)} que halle el radio exacto de intersección $\rho_c$ cuando la superficie corta la placa superior ($z(\rho_c) = z_{\mathrm{placa,sup}}$) y calcule $I_d/I = (\rho_c/R)^2$ e $I_{\mathrm{cond}}/I = 1 - (\rho_c/R)^2$, dibujando un anillo naranja brillante de radio $\rho_c$ sobre la placa durante el cruce.
+    \item Coloca a la izquierda un gráfico de barras 2D dinámico ($I_{\mathrm{cond}}$, $I_d$, $I_{\mathrm{tot}}$ en porcentaje, con línea discontinua en $I$) y debajo un recuadro de texto que cambie de color y ecuaciones en 4 actos suavizados con \texttt{smoothstep}: (1) boca y disco $S_2$ entre placas, (2) boca sube al cable formando el globo $S'_1$ sin tocar la placa superior junto con un giro suave de cámara, (3) el fondo cruza despacio la placa superior mostrando el relevo continuo $I_d \to I_{\mathrm{cond}}$ con $\nabla\cdot(\mathbf{J} + \varepsilon_0 \partial_t\mathbf{E}) = 0$, y (4) superficie plana $S_1$ en el cable.
+\end{enumerate}
+\end{quote}
+\noindent\color{mutedgray}\rule{\linewidth}{0.5pt}\color{black}
+
+\subsection{Opción B: Secuencia iterativa en 3 pasos (recomendada para clase)}
+
+\begin{enumerate}
+    \item \textbf{Paso 1 --- Escena 3D y parametrización de la superficie:}
+    \begin{quote}
+    «Crea una animación 3D en \texttt{matplotlib} (\texttt{FuncAnimation} + \texttt{Poly3DCollection}, exportable a \texttt{.mp4} con \texttt{FFMpegWriter}) de un condensador circular ($R = 1{,}15$, $z = \pm 0{,}55$) con corriente $I$ hacia abajo y un lazo circular $\Gamma$ de radio $r = 2{,}35 > R$ con vectores $\mathbf{B}$ tangentes. Parametriza la superficie como $z(\rho) = z_{\mathrm{fondo}} + (z_{\mathrm{boca}} - z_{\mathrm{fondo}})(\rho/r)^p$ y elige un exponente $p$ tal que al subir la boca a $z = 1{,}85$ dejando el fondo en $z = 0$, la superficie rodee limpiamente la placa superior sin tocarla.»
+    \end{quote}
+
+    \item \textbf{Paso 2 --- Física del cruce de la placa y verificación:}
+    \begin{quote}
+    «Ahora anima la subida lenta del fondo desde $z = 0$ hasta $z = 1{,}85$ atravesando la placa superior. Calcula en cada fotograma el radio exacto de corte $\rho_c$ donde $z(\rho_c) = z_{\mathrm{placa,sup}}$, dibuja el anillo de intersección sobre la placa y demuestra en el código que $I_d = I(\rho_c/R)^2$ y $I_{\mathrm{cond}} = I[1 - (\rho_c/R)^2]$ suman exactamente $I$ en todo instante.»
+    \end{quote}
+
+    \item \textbf{Paso 3 --- Panel didáctico sincronizado:}
+    \begin{quote}
+    «Añade a la izquierda un gráfico de barras 2D en tiempo real con $I_{\mathrm{cond}}$, $I_d$ e $I_{\mathrm{tot}}$ (con porcentajes), un panel de texto sincronizado con las 4 fases (incluyendo $\nabla\cdot(\mathbf{J}+\varepsilon_0\partial_t\mathbf{E})=0$ durante el cruce) y una ligera rotación azimutal de cámara en la fase de globo para apreciar el volumen 3D.»
+    \end{quote}
+\end{enumerate}
+
+\subsection{Palancas clave de diseño en este caso}
+
+\begin{itemize}
+    \item \textbf{Fijar la pila gráfica desde el inicio:} especificar \texttt{matplotlib} + \texttt{FFMpegWriter} evita dependencias pesadas y garantiza ejecución inmediata en cualquier entorno Python estándar.
+    \item \textbf{Controlar la geometría con una fórmula explícita:} el perfil $z(\rho) = z_{\mathrm{fondo}} + (z_{\mathrm{boca}} - z_{\mathrm{fondo}})(\rho/r)^{2{,}2}$ garantiza holgura con la placa en la fase de globo y permite despejar analíticamente el radio de corte $\rho_c$.
+    \item \textbf{Acoplar los datos a la geometría real:} exigir \texttt{compute\_exact\_flux\_split} impide que el modelo «finja» el relevo de las barras con una interpolación temporal desconectada del cruce real de la malla 3D.
+    \item \textbf{Diseñar el ritmo por tramos:} ralentizar el intervalo de cruce de la placa superior hace legible en clase tanto el encogimiento del anillo naranja como la compensación $I_{\mathrm{cond}} + I_d = I$.
+\end{itemize}
+
+\section{Lista de comprobación rápida para el estudiante}
+
+La Tabla~\ref{tab:checklist} resume los fallos más habituales al delegar un problema de física computacional en un modelo de lenguaje y cómo prevenirlos desde el diseño del prompt.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Errores frecuentes con prompts genéricos y correcciones recomendadas.}
+\label{tab:checklist}
+\begin{tabular}{@{}p{5.8cm}p{9.2cm}@{}}
+\toprule
+\textbf{Fallo típico con un prompt genérico} & \textbf{Qué especificar para evitarlo} \\
+\midrule
+Integración 3D lenta y ruidosa de $\mathbf{J}_d$. & Invocar el teorema de Helmholtz y reducir el cálculo a corrientes de conducción. \\
+Singularidades numéricas o avisos de convergencia en \texttt{quad}. & Pedir reducción a integrales elípticas, \texttt{points=[rho]} y cambios de variable no singulares. \\
+Barras o etiquetas animadas desincronizadas de la figura 3D. & Exigir una función geométrica exacta que calcule la intersección en cada fotograma. \\
+Curvas aplastadas por la divergencia $1/\rho$ cerca del eje. & Fijar explícitamente los límites de los ejes y recortar el dominio de las curvas divergentes. \\
+Errores silenciosos de signo o factores $2\pi$. & Trabajar en magnitudes adimensionales y exigir comprobación frente a límites analíticos conocidos. \\
+Desconocer el nombre del formalismo matemático avanzado. & Formular con precisión la condición de contorno física y pedir la formulación clásica 1D junto con un límite analítico de validación. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

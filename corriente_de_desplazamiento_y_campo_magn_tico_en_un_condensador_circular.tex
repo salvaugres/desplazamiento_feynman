@@ -1,0 +1,366 @@
+\documentclass[11pt]{article}
+
+\usepackage[paperwidth=28cm, paperheight=21cm, margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage[spanish, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{english}
+\babelfont{rm}{Noto Sans}
+\usepackage{enumitem}
+\setlist[itemize]{label=-}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{hyperref}
+
+\definecolor{accentblue}{RGB}{24, 78, 119}
+\definecolor{mutedgray}{RGB}{90, 100, 110}
+\definecolor{curveRed}{RGB}{204, 41, 54}
+\definecolor{curveBlue}{RGB}{0, 114, 178}
+\definecolor{curveGreen}{RGB}{0, 148, 110}
+\definecolor{curvePurple}{RGB}{128, 45, 160}
+\definecolor{curveDark}{RGB}{35, 35, 35}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=accentblue,
+    urlcolor=accentblue,
+    pdftitle={Corriente de desplazamiento y campo magnetico en un condensador circular},
+}
+
+\title{\textbf{\color{accentblue}Corriente de desplazamiento y campo magnético en un condensador circular}}
+\author{Apuntes de Electromagnetismo}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Se desarrolla el análisis matemático del ejemplo clásico de Feynman sobre la ley de Ampère-Maxwell en un condensador de placas circulares paralelas. Partiendo de la ambigüedad de la ley de Ampère y su resolución mediante la corriente de desplazamiento, se demuestra la conservación exacta del flujo total al deformar continuamente la superficie de Stokes a través de la placa conductora. A continuación, se obtiene el perfil radial exacto del campo magnético en régimen cuasiestático para espesor finito mediante integrales elípticas y, finalmente, se deriva la solución dinámica de alta frecuencia en términos de funciones de Bessel.
+\end{abstract}
+
+\tableofcontents
+\vspace{0.5cm}
+
+\section{Planteamiento geométrico y ley de Ampère-Maxwell}
+
+Consideremos un condensador formado por dos discos conductores circulares paralelos de radio $R$, situados en los planos $z = +d/2$ (placa superior) y $z = -d/2$ (placa inferior), con separación $d$. Por el eje $z$ circulan dos conductores rectilíneos conectados al centro de cada placa por los que desciende una corriente eléctrica $I(t)$ en la dirección $-\hat{z}$, cargando la placa superior con carga $+Q(t)$ y la inferior con $-Q(t)$, de modo que:
+\begin{equation}
+    I(t) = \frac{dQ}{dt}.
+\end{equation}
+
+En coordenadas cilíndricas $(\rho, \phi, z)$, la simetría axial del sistema garantiza que el campo magnético sea puramente acimutal, $\mathbf{B} = B_\phi(\rho, z, t)\,\hat{\phi}$. La ley de Ampère-Maxwell en forma integral sobre un contorno cerrado $\Gamma$ que limita una superficie abierta orientada $S$ establece:
+\begin{equation}
+    \oint_{\Gamma} \mathbf{B} \cdot d\mathbf{l} = \mu_0 \left( I_{\mathrm{cond}} + I_d \right) = \mu_0 \iint_{S} \left( \mathbf{J} + \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t} \right) \cdot d\mathbf{S}.
+    \label{eq:ampere-maxwell}
+\end{equation}
+
+Tomemos como contorno $\Gamma$ una circunferencia horizontal de radio $r > R$ centrada en el eje $z$, recorrida en sentido antihorario visto desde $+z$ (de modo que $d\mathbf{l} = r\,d\phi\,\hat{\phi}$ y el vector de superficie $d\mathbf{S}$ apunta en sentido $+\hat{z}$).
+
+\subsection{Comparación de superficies para $r > R$}
+
+Para una misma circunferencia $\Gamma$ situada alrededor del cable superior (o desplazada al plano medio $z = 0$):
+\begin{itemize}
+    \item \textbf{Superficie plana $S_1$ que corta el cable superior:} no hay campo eléctrico apreciable atravesándola ($I_d = 0$), pero el cable la perfora en dirección $-\hat{z}$, de modo que $\iint_{S_1} \mathbf{J} \cdot d\mathbf{S} = -I$.
+    \item \textbf{Superficie en forma de globo $S'_1$ que rodea la placa superior:} esquiva el conductor por completo ($I_{\mathrm{cond}} = 0$) y pasa por el espacio entre placas. Por la ley de Gauss aplicada a la placa superior, el flujo eléctrico total que atraviesa el hueco en sentido $-\hat{z}$ es $\Phi_E = -Q/\varepsilon_0$, luego:
+    \begin{equation}
+        I_d = \varepsilon_0 \frac{d\Phi_E}{dt} = -\frac{dQ}{dt} = -I.
+    \end{equation}
+    \item \textbf{Superficie plana $S_2$ en el plano medio $z = 0$:} igualmente $I_{\mathrm{cond}} = 0$ y, para $r \gg R$ (o en el límite $d \ll R$), captura todo el flujo eléctrico, por lo que $I_d = -I$.
+\end{itemize}
+
+En los tres casos, la ecuación \eqref{eq:ampere-maxwell} produce exactamente el mismo campo magnético (en sentido horario visto desde arriba):
+\begin{equation}
+    B_\phi(r) = -\frac{\mu_0 I}{2\pi r} \quad \Longrightarrow \quad |\mathbf{B}(r)| = \frac{\mu_0 I}{2\pi r} \qquad (r > R).
+\end{equation}
+
+\subsection{Régimen interior ($r < R$) en aproximación cuasiestática ideal}
+
+Si despreciamos los efectos de borde ($d \ll R$) y la inducción de Faraday ($\omega R / c \ll 1$), el campo eléctrico entre las placas es uniforme:
+\begin{equation}
+    \mathbf{E}(t) = -\frac{Q(t)}{\pi R^2 \varepsilon_0}\,\hat{z} \qquad (\rho \le R,\; |z| < d/2).
+\end{equation}
+Para una circunferencia interior de radio $r < R$ en el plano medio, el flujo eléctrico capturado es proporcional al área $\pi r^2$:
+\begin{equation}
+    I_d(r) = \varepsilon_0 \frac{d}{dt}\left( -\frac{Q(t)}{\pi R^2 \varepsilon_0}\,\pi r^2 \right) = -I\,\frac{r^2}{R^2},
+\end{equation}
+de donde resulta un crecimiento lineal del campo magnético con el radio:
+\begin{equation}
+    B_\phi(r) = -\frac{\mu_0 I}{2\pi R^2}\,r \qquad (r \le R).
+    \label{eq:cuasiestatico-interior}
+\end{equation}
+
+\section{Deformación continua de la superficie a través de la placa}
+
+Cuando deformamos continuamente la superficie tipo globo $S'_1$ hasta aplanarla en $S_1$, el fondo de la superficie atraviesa la placa superior en $z = +d/2$. Durante ese tránsito, la superficie corta la placa a lo largo de una circunferencia de radio $\rho_c \in [0, R]$ y coexisten corriente de conducción y corriente de desplazamiento.
+
+\subsection{Corrientes superficiales radiales en las placas}
+
+Bajo carga uniforme $\sigma(t) = Q(t)/(\pi R^2)$ en la placa superior, la ecuación de continuidad superficial exige:
+\begin{equation}
+    \nabla_s \cdot \mathbf{K}_+ + \frac{\partial \sigma}{\partial t} = 0 \quad \Longrightarrow \quad \frac{1}{\rho'} \frac{d}{d\rho'}\left( \rho' K_+(\rho') \right) = -\frac{I}{\pi R^2}.
+\end{equation}
+Integrando desde un radio genérico $\rho'$ hasta el borde $\rho' = R$, donde la corriente radial debe anularse ($K_+(R) = 0$):
+\begin{equation}
+    \left. \rho'' K_+(\rho'') \right|_{\rho'}^{R} = -\frac{I}{\pi R^2} \int_{\rho'}^{R} \rho''\,d\rho'' = -\frac{I}{2\pi R^2}\left( R^2 - \rho'^2 \right),
+\end{equation}
+se obtiene la densidad de corriente superficial en la placa superior (flujo radial saliente) y, análogamente, en la placa inferior (flujo radial entrante):
+\begin{equation}
+    \mathbf{K}_{\pm}(\rho') = \pm \frac{I}{2\pi \rho'} \left( 1 - \frac{\rho'^2}{R^2} \right) \hat{\rho}' \qquad (0 < \rho' \le R).
+    \label{eq:corriente-radial}
+\end{equation}
+
+\subsection{Balance exacto de corrientes durante el cruce}
+
+Cuando la superficie $S$ corta la placa superior en un círculo de radio $\rho_c$:
+\begin{itemize}
+    \item La región central ($\rho < \rho_c$) aún pasa por el hueco entre placas y atrapa una corriente de desplazamiento de magnitud:
+    \begin{equation}
+        I_d(\rho_c) = I\,\frac{\rho_c^2}{R^2}.
+    \end{equation}
+    \item En la intersección $\rho = \rho_c$, la superficie intercepta la corriente radial de conducción que fluye hacia el exterior de la placa:
+    \begin{equation}
+        I_{\mathrm{cond}}(\rho_c) = 2\pi \rho_c K_+(\rho_c) = I \left( 1 - \frac{\rho_c^2}{R^2} \right).
+    \end{equation}
+\end{itemize}
+
+Al sumar ambas contribuciones en cualquier instante del cruce se verifica exactamente:
+\begin{equation}
+    I_{\mathrm{cond}}(\rho_c) + I_d(\rho_c) = I \left( 1 - \frac{\rho_c^2}{R^2} \right) + I\,\frac{\rho_c^2}{R^2} = I.
+\end{equation}
+Este resultado es la manifestación integral de la solenoidalidad de la corriente total de Maxwell:
+\begin{equation}
+    \nabla \cdot \left( \mathbf{J} + \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t} \right) = 0,
+\end{equation}
+que garantiza que el campo magnético $\mathbf{B}$ sobre el contorno $\Gamma$ es estrictamente independiente de la superficie elegida.
+
+\section{Solución cuasiestática exacta para espesor finito $d$}
+
+En el régimen cuasiestático ($\omega R / c \ll 1$), el campo eléctrico deriva de un potencial escalar, $\mathbf{E} = -\nabla \phi$, por lo que la densidad de corriente de desplazamiento es irrotacional:
+\begin{equation}
+    \nabla \times \mathbf{J}_d = -\varepsilon_0 \nabla \times \nabla \left( \frac{\partial \phi}{\partial t} \right) = \mathbf{0}.
+\end{equation}
+Por el teorema de Helmholtz, la integral de Biot-Savart asociada a una fuente irrotacional que decae suficientemente rápido en el infinito se anula idénticamente:
+\begin{equation}
+    \frac{1}{4\pi} \iiint \frac{\mathbf{J}_d(\mathbf{r}') \times (\mathbf{r} - \mathbf{r}')}{|\mathbf{r} - \mathbf{r}'|^3}\,dV' = \frac{1}{4\pi} \iiint \frac{\nabla' \times \mathbf{J}_d(\mathbf{r}')}{|\mathbf{r} - \mathbf{r}'|}\,dV' = \mathbf{0}.
+\end{equation}
+En consecuencia, el campo magnético $\mathbf{H} = \mathbf{B}/\mu_0$ en cualquier punto $(\rho, z)$ del espacio queda determinado íntegramente por la ley de Biot-Savart aplicada a las corrientes de conducción: los dos hilos semiinfinitos y las corrientes radiales \eqref{eq:corriente-radial} en ambas placas.
+
+\subsection{Contribución de los dos hilos semiinfinitos}
+
+Integrando Biot-Savart sobre $z' \in (-\infty, -d/2] \cup [d/2, +\infty)$ con corriente $I$ en dirección $-\hat{z}$, la magnitud del campo acimutal debida a los cables es:
+\begin{equation}
+    H_{\mathrm{hilos}}(\rho, z) = \frac{I}{4\pi \rho} \left( 2 + \frac{z - d/2}{\sqrt{\rho^2 + (z - d/2)^2}} - \frac{z + d/2}{\sqrt{\rho^2 + (z + d/2)^2}} \right).
+    \label{eq:H-hilos}
+\end{equation}
+En el límite $d \to 0$ se recupera inmediatamente el resultado del hilo infinito, $H = I / (2\pi\rho)$.
+
+\subsection{Contribución de las placas mediante integrales elípticas}
+
+Para una placa situada en $z_p = \pm d/2$ con signo $s = \pm 1$, el elemento de corriente es $\mathbf{K}_s(\rho')\,\rho'\,d\rho'\,d\varphi$ y el vector desplazamiento hasta el punto de observación $(\rho, 0, z)$ tiene componente vertical $\Delta z = z - z_p$. Evaluando el producto vectorial en la dirección $-\hat{\phi}$, se obtiene:
+\begin{equation}
+    H_{\mathrm{placa}, s}(\rho, z) = \frac{s\,I\,\Delta z}{8\pi^2} \int_{0}^{R} \left( 1 - \frac{\rho'^2}{R^2} \right) \Phi(\rho, \rho', \Delta z)\,d\rho',
+    \label{eq:H-placa}
+\end{equation}
+donde la integral acimutal $\Phi$ admite forma cerrada en términos de las integrales elípticas completas de primera y segunda especie, $K(m)$ y $E(m)$:
+\begin{align}
+    \Phi(\rho, \rho', \Delta z) &= \int_{0}^{2\pi} \frac{\cos\varphi}{\left( \rho^2 + \rho'^2 - 2\rho\rho'\cos\varphi + \Delta z^2 \right)^{3/2}}\,d\varphi \nonumber \\
+    &= \frac{4}{\left( (\rho + \rho')^2 + \Delta z^2 \right)^{3/2}} \left[ \frac{2 - m}{m(1 - m)}\,E(m) - \frac{2}{m}\,K(m) \right],
+\end{align}
+con parámetro elíptico:
+\begin{equation}
+    m = \frac{4\rho\rho'}{(\rho + \rho')^2 + \Delta z^2}.
+\end{equation}
+El campo magnético total en régimen cuasiestático es la suma $H_{\mathrm{tot}}(\rho, z) = H_{\mathrm{hilos}} + H_{\mathrm{placa},+} + H_{\mathrm{placa},-}$.
+
+\section{Corrección dinámica de alta frecuencia (funciones de Bessel)}
+
+Cuando la frecuencia angular $\omega$ crece y deja de cumplirse $kR = \omega R / c \ll 1$, el campo magnético variable entre las placas induce un campo eléctrico rotacional según la ley de Faraday, haciendo que $E_z$ deje de ser uniforme con el radio.
+
+\subsection{Derivación de la ecuación de Bessel}
+
+Suponiendo régimen armónico $e^{-i\omega t}$, simetría axial y despreciando los efectos de borde ($\rho \le R$), los campos en el interior tienen la forma $\mathbf{E} = E_z(\rho)\,e^{-i\omega t}\hat{z}$ y $\mathbf{B} = B_\phi(\rho)\,e^{-i\omega t}\hat{\phi}$. Las ecuaciones de Maxwell en el vacío entre las placas se reducen a:
+\begin{align}
+    (\nabla \times \mathbf{E})_\phi = -\frac{dE_z}{d\rho} = i\omega B_\phi \quad &\Longrightarrow \quad B_\phi(\rho) = \frac{i}{\omega} \frac{dE_z}{d\rho}, \label{eq:faraday-cil} \\
+    (\nabla \times \mathbf{B})_z = \frac{1}{\rho} \frac{d}{d\rho}\left( \rho B_\phi \right) &= -\frac{i\omega}{c^2} E_z. \label{eq:ampere-cil}
+\end{align}
+Sustituyendo \eqref{eq:faraday-cil} en \eqref{eq:ampere-cil} y definiendo el número de onda $k = \omega / c$:
+\begin{equation}
+    \frac{1}{\rho} \frac{d}{d\rho}\left( \rho \frac{dE_z}{d\rho} \right) + k^2 E_z = 0 \quad \Longleftrightarrow \quad \rho^2 \frac{d^2 E_z}{d\rho^2} + \rho \frac{dE_z}{d\rho} + (k\rho)^2 E_z = 0.
+\end{equation}
+Se trata de la ecuación diferencial de Bessel de orden cero, cuya solución general es $E_z(\rho) = A\,J_0(k\rho) + B\,Y_0(k\rho)$. La regularidad del campo en el eje $\rho = 0$ impone $B = 0$, luego:
+\begin{equation}
+    E_z(\rho) = E_0\,J_0(k\rho).
+\end{equation}
+Aplicando \eqref{eq:faraday-cil} y la identidad $dJ_0(x)/dx = -J_1(x)$, se obtiene el campo magnético interior:
+\begin{equation}
+    B_\phi(\rho) = -\frac{i E_0}{c}\,J_1(k\rho).
+\end{equation}
+
+\subsection{Normalización con la corriente total $I$ y límites físicos}
+
+Evaluando la ley de Ampère-Maxwell en el borde de la placa $\rho = R$ (donde la corriente total es $I$, de modo que $B_\phi(R) = -\mu_0 I / (2\pi R)$), eliminamos la amplitud $E_0$:
+\begin{equation}
+    B_\phi(\rho) = -\frac{\mu_0 I}{2\pi R}\,\frac{J_1(k\rho)}{J_1(kR)} \qquad (\rho \le R).
+    \label{eq:bessel-B}
+\end{equation}
+
+De la expresión \eqref{eq:bessel-B} se desprenden tres consecuencias físicas fundamentales:
+\begin{itemize}
+    \item \textbf{Límite de baja frecuencia ($kR \ll 1$):} usando el desarrollo $J_1(x) = \frac{x}{2} - \frac{x^3}{16} + \mathcal{O}(x^5)$, resulta:
+    \begin{equation}
+        \frac{J_1(k\rho)}{J_1(kR)} \approx \frac{\rho}{R} \left[ 1 + \frac{k^2(R^2 - \rho^2)}{8} \right],
+    \end{equation}
+    que recupera la ley lineal cuasiestática \eqref{eq:cuasiestatico-interior} en el orden dominante y muestra una curvatura positiva (arqueamiento hacia arriba) al subir la frecuencia.
+    \item \textbf{Máximo interior antes del borde:} puesto que $J_1(x)$ alcanza su primer máximo en $x \approx 1{,}8412$, para cualquier frecuencia con $kR > 1{,}8412$ el campo magnético interior supera al valor $H_0 = I/(2\pi R)$ del borde.
+    \item \textbf{Primera resonancia ($\mathrm{TM}_{010}$):} cuando $kR$ alcanza el primer cero de $J_0$ ($kR \approx 2{,}4048$), el campo eléctrico se anula en el borde de la placa y el condensador pasa a comportarse como una cavidad resonante.
+\end{itemize}
+
+\section{Comparación cuantitativa de los regímenes}
+
+La Tabla~\ref{tab:comparacion} recoge el campo magnético normalizado $H_\phi / H_0$, con $H_0 = I / (2\pi R)$, comparando la solución cuasiestática exacta para $d = 0{,}2\,R$ (en el plano medio $z = 0$ y a $5d$ por encima de la placa superior, $z = 5{,}5\,d$), el límite ideal sin bordes, el hilo infinito y las curvas dinámicas de Bessel para $kR = 1{,}5$ y $kR = 2{,}4$.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\caption{Campo magnético normalizado $H_\phi / (I / 2\pi R)$ en función del radio $\rho/R$.}
+\label{tab:comparacion}
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+$\rho / R$ & $z = 0$ ($d=0{,}2R$) & Ideal ($d\to 0$) & Bessel ($kR=1{,}5$) & Bessel ($kR=2{,}4$) & $z = 5{,}5d$ & Hilo $I/(2\pi\rho)$ \\
+\midrule
+0,00 & 0,000 & 0,000 & 0,000 & 0,000 & ---   & ---   \\
+0,25 & 0,225 & 0,250 & 0,330 & 0,551 & 3,993 & 4,000 \\
+0,40 & 0,358 & 0,400 & 0,514 & 0,820 & 2,488 & 2,500 \\
+0,60 & 0,530 & 0,600 & 0,728 & 1,055 & 1,650 & 1,667 \\
+0,80 & 0,688 & 0,800 & 0,893 & 1,116 & 1,230 & 1,250 \\
+0,90 & 0,752 & 0,900 & 0,954 & 1,079 & 1,090 & 1,111 \\
+1,00 & 0,785 & 1,000 & 1,000 & 1,000 & 0,978 & 1,000 \\
+1,50 & 0,612 & 0,667 & ---   & ---   & 0,646 & 0,667 \\
+2,00 & 0,472 & 0,500 & ---   & ---   & 0,484 & 0,500 \\
+3,00 & 0,322 & 0,333 & ---   & ---   & 0,324 & 0,333 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Las Figuras~\ref{fig:perfil-completo} y \ref{fig:zoom-bessel} representan visualmente estos resultados con escala vertical optimizada para proyección en aula.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.94\textwidth,
+    height=7.8cm,
+    xlabel={Radio normalizado $\rho / R$},
+    ylabel={Campo normalizado $H_\phi \,/\, (I / 2\pi R)$},
+    xmin=0, xmax=3.0,
+    ymin=0, ymax=2.2,
+    xtick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ytick={0, 0.5, 1.0, 1.5, 2.0},
+    grid=major,
+    grid style={dashed, gray!35},
+    tick label style={font=\small},
+    label style={font=\normalsize\bfseries},
+    legend pos=north east,
+    legend style={font=\small, fill=white, fill opacity=0.94, draw=gray!50, cells={anchor=west}},
+    clip=true,
+]
+\fill[accentblue!8] (axis cs:0,0) rectangle (axis cs:1,2.2);
+\draw[gray, dotted, line width=1.1pt] (axis cs:1,0) -- (axis cs:1,2.2);
+\node[anchor=north, font=\footnotesize\bfseries, text=accentblue] at (axis cs:0.5, 2.12) {Interior ($\rho \le R$)};
+\node[anchor=north, font=\footnotesize\bfseries, text=mutedgray] at (axis cs:2.0, 2.12) {Exterior ($\rho > R$)};
+
+\addplot[color=curveDark, dashed, line width=1.6pt, smooth] coordinates {
+    (0.45, 2.222) (0.50, 2.000) (0.60, 1.667) (0.70, 1.429) (0.80, 1.250)
+    (0.90, 1.111) (1.00, 1.000) (1.10, 0.909) (1.25, 0.800) (1.50, 0.667)
+    (1.75, 0.571) (2.00, 0.500) (2.50, 0.400) (3.00, 0.333)
+};
+\addlegendentry{Hilo infinito $I/(2\pi\rho)$}
+
+\addplot[color=mutedgray, dashdotted, line width=1.6pt] coordinates {
+    (0.00, 0.000) (0.25, 0.250) (0.50, 0.500) (0.75, 0.750) (1.00, 1.000)
+    (1.10, 0.909) (1.25, 0.800) (1.50, 0.667) (1.75, 0.571) (2.00, 0.500)
+    (2.50, 0.400) (3.00, 0.333)
+};
+\addlegendentry{Ideal sin bordes ($d \ll R$)}
+
+\addplot[color=curveBlue, line width=2.0pt, smooth] coordinates {
+    (0.45, 2.208) (0.50, 1.986) (0.60, 1.650) (0.70, 1.411) (0.80, 1.230)
+    (0.90, 1.090) (1.00, 0.978) (1.10, 0.887) (1.25, 0.778) (1.50, 0.646)
+    (1.75, 0.553) (2.00, 0.484) (2.50, 0.388) (3.00, 0.324)
+};
+\addlegendentry{$z = 5{,}5\,d$ ($5d$ sobre placa)}
+
+\addplot[color=curveRed, line width=2.2pt, smooth] coordinates {
+    (0.00, 0.000) (0.25, 0.225) (0.40, 0.358) (0.60, 0.530) (0.80, 0.688)
+    (0.90, 0.752) (1.00, 0.785) (1.10, 0.769) (1.25, 0.710) (1.50, 0.612)
+    (1.75, 0.534) (2.00, 0.472) (2.50, 0.383) (3.00, 0.322)
+};
+\addlegendentry{$z = 0$ (plano medio, $d = 0{,}2\,R$)}
+\end{axis}
+\end{tikzpicture}
+\caption{Perfil radial completo del campo magnético normalizado $H_\phi / H_0$ para $d = 0{,}2\,R$, comparando el plano medio ($z = 0$), el plano situado a $5d$ sobre la placa superior ($z = 5{,}5\,d$), el límite ideal sin bordes y el hilo infinito $I/(2\pi\rho)$.}
+\label{fig:perfil-completo}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.94\textwidth,
+    height=7.4cm,
+    xlabel={Radio normalizado interior $\rho / R$},
+    ylabel={Campo normalizado $H_\phi \,/\, (I / 2\pi R)$},
+    xmin=0, xmax=1.0,
+    ymin=0, ymax=1.25,
+    xtick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+    ytick={0, 0.25, 0.5, 0.75, 1.0, 1.25},
+    grid=major,
+    grid style={dashed, gray!35},
+    tick label style={font=\small},
+    label style={font=\normalsize\bfseries},
+    legend pos=north west,
+    legend style={font=\small, fill=white, fill opacity=0.94, draw=gray!50, cells={anchor=west}},
+]
+\draw[gray, dotted, line width=1.0pt] (axis cs:0,1.0) -- (axis cs:1.0,1.0);
+
+\addplot[color=curvePurple, line width=2.2pt, smooth] coordinates {
+    (0.00, 0.000) (0.15, 0.340) (0.25, 0.551) (0.40, 0.820) (0.50, 0.958)
+    (0.60, 1.055) (0.70, 1.106) (0.77, 1.119) (0.80, 1.116) (0.90, 1.079)
+    (1.00, 1.000)
+};
+\addlegendentry{Bessel $J_1(k\rho)/J_1(kR)$, $kR = 2{,}4$}
+
+\addplot[color=curveGreen, line width=2.2pt, smooth] coordinates {
+    (0.00, 0.000) (0.15, 0.200) (0.25, 0.330) (0.40, 0.514) (0.50, 0.626)
+    (0.60, 0.728) (0.70, 0.816) (0.80, 0.893) (0.90, 0.954) (1.00, 1.000)
+};
+\addlegendentry{Bessel $J_1(k\rho)/J_1(kR)$, $kR = 1{,}5$}
+
+\addplot[color=mutedgray, dashdotted, line width=1.7pt] coordinates {
+    (0.00, 0.000) (1.00, 1.000)
+};
+\addlegendentry{Ideal cuasiestático ($kR \ll 1$, $d \ll R$)}
+
+\addplot[color=curveRed, line width=2.2pt, smooth] coordinates {
+    (0.00, 0.000) (0.25, 0.225) (0.40, 0.358) (0.60, 0.530) (0.80, 0.688)
+    (0.90, 0.752) (1.00, 0.785)
+};
+\addlegendentry{Cuasiestático real $z = 0$ ($d = 0{,}2\,R$)}
+\end{axis}
+\end{tikzpicture}
+\caption{Detalle del campo magnético en el interior del condensador ($\rho \le R$): comparación entre la caída por efectos de borde ($d = 0{,}2\,R$), la ley lineal ideal y el arqueamiento dinámico de alta frecuencia descrito por $J_1(k\rho)/J_1(kR)$.}
+\label{fig:zoom-bessel}
+\end{figure}
+
+Como síntesis para la discusión en clase:
+\begin{itemize}
+    \item En $z = 0$ con $d = 0{,}2\,R$, los efectos de borde recortan el máximo en $\rho = R$ en un $21{,}5\,\%$ respecto al límite ideal $d \to 0$, debido al flujo eléctrico que escapa lateralmente fuera del disco.
+    \item A $5d$ sobre la placa superior ($z = 5{,}5\,d$), el campo coincide prácticamente con $I/(2\pi\rho)$ cerca del cable y muestra un ligero déficit alrededor de $\rho \sim R$ (en torno al $2{,}2\,\%$) causado por el hueco entre placas.
+    \item Para radios exteriores $\rho \ge 2{,}5\,R$, las curvas en $z = 0$ y $z = 5{,}5\,d$ convergen hacia $I/(2\pi\rho)$, confirmando la validez cuantitativa del argumento de Feynman con $r > R$.
+\end{itemize}
+
+\end{document}
